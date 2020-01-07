@@ -1,0 +1,46 @@
+.App{
+  display: flex;
+  flex-flow: column;
+}
+
+.fixed-header, .fixed-footer{
+    flex: 1;
+    width: 100%;
+    position: fixed;
+    background: #333;
+    padding: 10px 0;
+    color: #fff;
+}
+.fixed-header{
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content:space-around;
+}
+.fixed-footer{
+    bottom: 0;
+    left: 0;
+    justify-content: space-around;
+    vertically-align: middle;
+
+}
+.help-bar{
+display: inline-block;
+}
+
+.fixed-footer svg{
+  position: fixed;
+  right: 0;
+  padding: 10px;
+}
+
+.image-container{
+  /*background-image: url("../static/images/coffee.jpeg");*/
+  flex: 2;
+}
+
+html, body, #root, .App{
+  min-height: 100%;
+  height: 100%;
+}
+
