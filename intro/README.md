@@ -514,6 +514,58 @@ Again similar to render props HOC's are best utilized when you have
 multiple components that share very similar logic except for maybe
 function that is being called.
 
+```
+function HOCToast(WrappedComponent){
+    return(
+        class HOC extends React.Component(){
+            render(){
+                HOCToast.displayName = `HOCToast(${getDisplayName(WrappedComponent)})`;
+                return <WrappedComponent {...this.props} />
+            }
+        }
+    )
+}
+
+function getDisplayName(WrappedComponent) {
+  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
+}
+```
+
+So to utilize this HOC
+
+
+`const NewYearToast = HOCToast(<Toast />)`
+
+Then you can use your new component any where you wish by instantiating
+it. 
+```
+let toast = "May all your troubles during the coming year be as short as your New Year's resolutions."
+<NewYearsToast  phrase={toast}/>
+```
+
+Several Important Notes.
+1. HOC's don't mutate the original component, in our case `toast`.
+Instead new logic should be added to the `HOC` class returned by the
+HOC function. 
+
+People have been know to take in the original component mutate that
+component (via lifecycle methods or other) and return the same component.
+This can cause what React call `leaky abstraction`. The consumer of the
+component must know the inner working in order to stay away from conflicts.
+
+1. Pass through unrelated props, here it is good practice to pass props
+that are unrelated to the HOC to the `WrappedComponent`. This keeps the
+developer from drasically changing the interface between the HOC and 
+original component.
+
+1. It is also good practive to provide your HOC with a display name for
+easy debugging in [React Developer Tools](https://github.com/facebook/react-devtools) 
+
+And a couple caveats:
+1. Don't use HOC's inside a render method
+1. Static methods must be copied over
+1. Refs are not passed through
+
 ### 8. Portals 
 In react it is general practice to develop an application from a single 
 source node. While this might be fine for some applications, eventually 
@@ -579,4 +631,55 @@ class Portal extends React.Component{
 
 ### 9. Ref's
 
+You can see even through this tutorial that react generally passes
+props from one component to the other, and that this method isn't
+always sufficient or efficient. So to allow for better encapsulation 
+and reuse react has created utilities which we have seen 
+`this.props.children`, `Context`, and now `Ref's`.
+
+When using options other than `Ref` these utilities are inline with
+some interface process flow, but there are situations when you need
+to modify a child outside of this normal flow. This is the situation
+to use `Ref's`. Think of focus, text selection, animations, etc..
+
+To utilize ref's create one `React.createRef()` and attach it to React
+elements using the ref prop
+
+Take our portal example,  say if we wanted our popup to change based on
+the state of our portal component.
+
+```
+class Portal extends React.Component{
+    constructor(props){
+        super(props);
+        this.portalElement = document.createElement('div');
+        this.myRef = React.createRef();
+    }
+
+    componentDidMount(){
+        document.body.append(this.portalElement);
+    }
+    
+    render(){
+        return ReactDOM.createPortal(<Popup toastCount={this.props.toastCount} ref={this.myRef}/>, this.portalElement);
+    }
+}
+``` 
+
+To access and write logic around the ref, utilize `this.myRef.current`
+
 ### 10. Suspense
+
+I didn't use suspense in this project but I thought it would be useful
+to at least know about going forward.  
+
+`Suspense` is a component that takes a fallback component as a prop
+while it's children components load. It is used to support `lazy loading`.
+I mention it here because react plans to develop it further to support
+scenarios like data loading. Just something  to keep in the back of your mind.
+
+
+####Other Topics
+- Controlled/Uncontrolled Components
+    - [Great artical explaining the difference in a simple manor](https://goshakkk.name/controlled-vs-uncontrolled-inputs-react/)
+

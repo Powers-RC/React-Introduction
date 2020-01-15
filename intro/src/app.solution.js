@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as Icons from '@fortawesome/free-solid-svg-icons';
+import { WaveSpinner } from "react-spinners-kit";
 import coffee from './main/static/images/coffee.jpeg';
 import freshAir from './main/static/images/fresh-air.jpeg';
 import baby from './main/static/images/baby.jpeg';
@@ -20,29 +21,48 @@ class App extends React.Component {
     super(props);
     this.state = {
       backgroundImage: `url(${coffee})`,
-      iconName: 'coffee'
+      iconName: 'coffee',
+      loading: false
     };
     this.iconClick = this.iconClick.bind(this);
   }
 
+
   iconClick(name){
       switch (name){
         case 'coffee':
-          this.setState({backgroundImage: `url(${coffee})`});
+        this.setState({loading: true})
+        setTimeout(
+            () => {
+              this.setState({backgroundImage: `url(${coffee})`, loading: false});
+            }, 2000
+          )
           break;
         case 'air-freshener':
-          this.setState({backgroundImage: `url(${freshAir})`});
+          this.setState({loading: true})
+          setTimeout(
+            () => {
+              this.setState({backgroundImage: `url(${freshAir})`, loading: false});
+            }, 2000
+          )
           break;
         case 'baby':
-          this.setState({backgroundImage: `url(${baby})`});
+          this.setState({loading: true})
+          setTimeout(
+            () => {
+               this.setState({backgroundImage: `url(${baby})`, loading: false});
+             }, 2000
+           )
           break;
       }
   }
+
   render(){
     return (
             <div className="App">
               <backgroundContext.Provider value={this.state.backgroundImage}>
-                <IconBar iconArray={["coffee", "air-freshener", "baby"]} render={ name => <IconTab iconName={name} onClick={() => this.iconClick(name)}/>}/>
+                <IconBar iconArray={["coffee", "air-freshener", "baby"]} render={ name => <IconTab iconName={name}
+                  onClick={() => this.iconClick(name)}/>} loading={this.state.loading}/>
                 <backgroundContext.Consumer>
                   {
                     context => <div className="image-container" style={{backgroundImage: context}} />
@@ -68,6 +88,9 @@ export class IconBar extends React.Component{
     return(
       <div className="fixed-header">
         {icons}
+        <WaveSpinner className="spinner"
+            loading={this.props.loading}
+         />
       </div>
     )
   }
@@ -78,16 +101,25 @@ export class IconTab extends React.Component{
   constructor(props){
     super(props);
     this.iconClick = this.iconClick.bind(this);
+    this.focus = this.focus.bind(this);
+    this.state ={style: {color: ''}};
   }
 
   iconClick(){
     alert(this.props.iconName);
   }
 
+  focus(){
+    this.setState({style: {color: "LightBlue"}});
+    setTimeout(
+      () => this.setState({style: {color: "white"}}), 200
+    );
+  }
+
 
   render(){
     return (
-        <FontAwesomeIcon icon={this.props.iconName} onClick={this.props.onClick? this.props.onClick: this.iconClick}/>
+        <FontAwesomeIcon icon={this.props.iconName} onClick={this.props.onClick? this.props.onClick: this.iconClick} style={this.state.style}/>
     )
   }
 }
@@ -124,7 +156,7 @@ export class Modal extends React.Component{
       super(props);
       this.handleChange = this.handleChange.bind(this);
       this.handleSubmit = this.handleSubmit.bind(this);
-      this.state = {value: '', messagesList: []};
+      this.state = {value: '', messagesList: [], color: 'blue'};
     }
 
     handleSubmit(e){
@@ -132,13 +164,15 @@ export class Modal extends React.Component{
       console.log("Value Entered: " + this.state.value);
 
       let currentMessages = this.state.messagesList;
-      let newMessagesList = currentMessages.concat(HigherOrderMessage(Message, this.state.value));
-      this.setState({messagesList: newMessagesList});
+      let newMessagesList = currentMessages.concat(HigherOrderMessage(Message, this.state.value, this.state.color));
+      this.state.color == 'blue'? this.setState({messagesList: newMessagesList, color: 'red'}) :
+        this.setState({messagesList: newMessagesList, color: 'blue'});
     }
 
     handleChange(e){
       this.setState({value: e.target.value});
     }
+
 
   render(){
     let childCount =  React.Children.count(this.props.children);
@@ -158,7 +192,8 @@ export class Modal extends React.Component{
       </section>
       <section className="modal-user-input">
         <form onSubmit={this.handleSubmit}>
-          <input className="modal-input" type="text"  placeholder="What seems to be the problem?" value={this.state.value} onChange={this.handleChange}/>
+          <input className="modal-input" type="text"  placeholder="What seems to be the problem?"
+            value={this.state.value} onChange={this.handleChange}/>
           <input type="submit" value="Submit"/>
         </form>
       </section>
@@ -173,17 +208,18 @@ export class Footer extends React.Component{
     super(props);
     this.state = {helpRequest: false};
     this.toggleModal = this.toggleModal.bind(this);
+    this.iconClickRef = React.createRef();
   }
 
   toggleModal(){
+    this.iconClickRef.current.focus();
     this.state.helpRequest? this.setState({helpRequest: false}): this.setState({helpRequest: true});
   }
 
   render(){
     return(
     <React.Fragment>
-      <p className="help-bar"></p>
-      <IconTab iconName="question-circle"  onClick={this.toggleModal}/>
+      <IconTab iconName="question-circle"  onClick={this.toggleModal} ref={this.iconClickRef}/>
       {this.state.helpRequest? <SupportPanel toggleModal={this.toggleModal}/> : null}
     </React.Fragment >
     )
@@ -196,27 +232,34 @@ export class Footer extends React.Component{
 export class Message extends React.Component{
   constructor(props){
     super(props);
-    this.state = {value: ''};
+    this.state = {};
   }
 
   render(){
-    return <div>Test</div>
+    return(
+      <React.Fragment>
+        <div style={{textAlign:'left', color: this.props.color}}>
+          {this.props.message}
+        </div>
+        <br/>
+      </React.Fragment>
+    )
   }
 }
 
-function HigherOrderMessage(WrappedComponent, message){
+function HigherOrderMessage(WrappedComponent, message, color){
   return class extends React.Component{
-
-    edit(){
-
+    constructor(props){
+      super(props)
+    }
+    save(){
     }
 
-    save(){
-
+    edit(){
     }
 
    render(){
-    return <WrappedComponent {...this.props}/>
+    return <WrappedComponent message={message} color={color}/>
    }
   }
 }
